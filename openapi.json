@@ -1,1 +1,1067 @@
-{"swagger":"2.0","info":{"description":"This is a demo of [LucyBot's API Documentation](http://lucybot.com) using swagger.io's Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key `special-key` to test the authorization filters.\n\nTo use this documentation for your own API, visit [http://lucybot.com](http://lucybot.com)","version":"1.0.0","title":"Swagger Petstore","termsOfService":"http://swagger.io/terms/","contact":{"email":"apiteam@swagger.io"},"license":{"name":"Apache 2.0","url":"http://www.apache.org/licenses/LICENSE-2.0.html"}},"host":"petstore.swagger.io","basePath":"/v2","tags":[{"name":"pet","description":"Everything about your Pets","externalDocs":{"description":"Find out more","url":"http://swagger.io"}},{"name":"store","description":"Access to Petstore orders"},{"name":"user","description":"Operations about user","externalDocs":{"description":"Find out more about our store","url":"http://swagger.io"}}],"schemes":["http"],"paths":{"/pet":{"post":{"tags":["pet"],"summary":"Add a new pet to the store","description":"","operationId":"addPet","consumes":["application/json","application/xml"],"produces":["application/xml","application/json"],"parameters":[{"in":"body","name":"body","description":"Pet object that needs to be added to the store","required":true,"schema":{"$ref":"#/definitions/Pet"}}],"responses":{"405":{"description":"Invalid input"}},"security":[{"petstore_auth":["write:pets","read:pets"]}]},"put":{"tags":["pet"],"summary":"Update an existing pet","description":"","operationId":"updatePet","consumes":["application/json","application/xml"],"produces":["application/xml","application/json"],"parameters":[{"in":"body","name":"body","description":"Pet object that needs to be added to the store","required":true,"schema":{"$ref":"#/definitions/Pet"}}],"responses":{"400":{"description":"Invalid ID supplied"},"404":{"description":"Pet not found"},"405":{"description":"Validation exception"}},"security":[{"petstore_auth":["write:pets","read:pets"]}]}},"/pet/findByStatus":{"get":{"tags":["pet"],"summary":"Finds Pets by status","description":"Multiple status values can be provided with comma separated strings","operationId":"findPetsByStatus","produces":["application/xml","application/json"],"parameters":[{"name":"status","in":"query","description":"Status values that need to be considered for filter","required":true,"type":"array","items":{"type":"string","enum":["available","pending","sold"],"default":"available"},"collectionFormat":"multi"}],"responses":{"200":{"description":"successful operation","schema":{"type":"array","items":{"$ref":"#/definitions/Pet"}}},"400":{"description":"Invalid status value"}},"security":[{"petstore_auth":["write:pets","read:pets"]}]}},"/pet/findByTags":{"get":{"tags":["pet"],"summary":"Finds Pets by tags","description":"Muliple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.","operationId":"findPetsByTags","produces":["application/xml","application/json"],"parameters":[{"name":"tags","in":"query","description":"Tags to filter by","required":true,"type":"array","items":{"type":"string"},"collectionFormat":"multi"}],"responses":{"200":{"description":"successful operation","schema":{"type":"array","items":{"$ref":"#/definitions/Pet"}}},"400":{"description":"Invalid tag value"}},"security":[{"petstore_auth":["write:pets","read:pets"]}],"deprecated":true}},"/pet/{petId}":{"get":{"tags":["pet"],"summary":"Find pet by ID","description":"Returns a single pet","operationId":"getPetById","produces":["application/xml","application/json"],"parameters":[{"name":"petId","in":"path","description":"ID of pet to return","required":true,"type":"integer","format":"int64"}],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/Pet"}},"400":{"description":"Invalid ID supplied"},"404":{"description":"Pet not found"}},"security":[{"api_key":[]}]},"post":{"tags":["pet"],"summary":"Updates a pet in the store with form data","description":"","operationId":"updatePetWithForm","consumes":["application/x-www-form-urlencoded"],"produces":["application/xml","application/json"],"parameters":[{"name":"petId","in":"path","description":"ID of pet that needs to be updated","required":true,"type":"integer","format":"int64"},{"name":"name","in":"formData","description":"Updated name of the pet","required":false,"type":"string"},{"name":"status","in":"formData","description":"Updated status of the pet","required":false,"type":"string"}],"responses":{"405":{"description":"Invalid input"}},"security":[{"petstore_auth":["write:pets","read:pets"]}]},"delete":{"tags":["pet"],"summary":"Deletes a pet","description":"","operationId":"deletePet","produces":["application/xml","application/json"],"parameters":[{"name":"api_key","in":"header","required":false,"type":"string"},{"name":"petId","in":"path","description":"Pet id to delete","required":true,"type":"integer","format":"int64"}],"responses":{"400":{"description":"Invalid ID supplied"},"404":{"description":"Pet not found"}},"security":[{"petstore_auth":["write:pets","read:pets"]}]}},"/pet/{petId}/uploadImage":{"post":{"tags":["pet"],"summary":"uploads an image","description":"","operationId":"uploadFile","consumes":["multipart/form-data"],"produces":["application/json"],"parameters":[{"name":"petId","in":"path","description":"ID of pet to update","required":true,"type":"integer","format":"int64"},{"name":"additionalMetadata","in":"formData","description":"Additional data to pass to server","required":false,"type":"string"},{"name":"file","in":"formData","description":"file to upload","required":false,"type":"file"}],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/ApiResponse"}}},"security":[{"petstore_auth":["write:pets","read:pets"]}]}},"/store/inventory":{"get":{"tags":["store"],"summary":"Returns pet inventories by status","description":"Returns a map of status codes to quantities","operationId":"getInventory","produces":["application/json"],"parameters":[],"responses":{"200":{"description":"successful operation","schema":{"type":"object","additionalProperties":{"type":"integer","format":"int32"}}}},"security":[{"api_key":[]}]}},"/store/order":{"post":{"tags":["store"],"summary":"Place an order for a pet","description":"","operationId":"placeOrder","produces":["application/xml","application/json"],"parameters":[{"in":"body","name":"body","description":"order placed for purchasing the pet","required":true,"schema":{"$ref":"#/definitions/Order"}}],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/Order"}},"400":{"description":"Invalid Order"}}}},"/store/order/{orderId}":{"get":{"tags":["store"],"summary":"Find purchase order by ID","description":"For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions","operationId":"getOrderById","produces":["application/xml","application/json"],"parameters":[{"name":"orderId","in":"path","description":"ID of pet that needs to be fetched","required":true,"type":"integer","maximum":10.0,"minimum":1.0,"format":"int64"}],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/Order"}},"400":{"description":"Invalid ID supplied"},"404":{"description":"Order not found"}}},"delete":{"tags":["store"],"summary":"Delete purchase order by ID","description":"For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors","operationId":"deleteOrder","produces":["application/xml","application/json"],"parameters":[{"name":"orderId","in":"path","description":"ID of the order that needs to be deleted","required":true,"type":"integer","minimum":1.0,"format":"int64"}],"responses":{"400":{"description":"Invalid ID supplied"},"404":{"description":"Order not found"}}}},"/user":{"post":{"tags":["user"],"summary":"Create user","description":"This can only be done by the logged in user.","operationId":"createUser","produces":["application/xml","application/json"],"parameters":[{"in":"body","name":"body","description":"Created user object","required":true,"schema":{"$ref":"#/definitions/User"}}],"responses":{"default":{"description":"successful operation"}}}},"/user/createWithArray":{"post":{"tags":["user"],"summary":"Creates list of users with given input array","description":"","operationId":"createUsersWithArrayInput","produces":["application/xml","application/json"],"parameters":[{"in":"body","name":"body","description":"List of user object","required":true,"schema":{"type":"array","items":{"$ref":"#/definitions/User"}}}],"responses":{"default":{"description":"successful operation"}}}},"/user/createWithList":{"post":{"tags":["user"],"summary":"Creates list of users with given input array","description":"","operationId":"createUsersWithListInput","produces":["application/xml","application/json"],"parameters":[{"in":"body","name":"body","description":"List of user object","required":true,"schema":{"type":"array","items":{"$ref":"#/definitions/User"}}}],"responses":{"default":{"description":"successful operation"}}}},"/user/login":{"get":{"tags":["user"],"summary":"Logs user into the system","description":"","operationId":"loginUser","produces":["application/xml","application/json"],"parameters":[{"name":"username","in":"query","description":"The user name for login","required":true,"type":"string"},{"name":"password","in":"query","description":"The password for login in clear text","required":true,"type":"string"}],"responses":{"200":{"description":"successful operation","schema":{"type":"string"},"headers":{"X-Rate-Limit":{"type":"integer","format":"int32","description":"calls per hour allowed by the user"},"X-Expires-After":{"type":"string","format":"date-time","description":"date in UTC when token expires"}}},"400":{"description":"Invalid username/password supplied"}}}},"/user/logout":{"get":{"tags":["user"],"summary":"Logs out current logged in user session","description":"","operationId":"logoutUser","produces":["application/xml","application/json"],"parameters":[],"responses":{"default":{"description":"successful operation"}}}},"/user/{username}":{"get":{"tags":["user"],"summary":"Get user by user name","description":"","operationId":"getUserByName","produces":["application/xml","application/json"],"parameters":[{"name":"username","in":"path","description":"The name that needs to be fetched. Use user1 for testing. ","required":true,"type":"string"}],"responses":{"200":{"description":"successful operation","schema":{"$ref":"#/definitions/User"}},"400":{"description":"Invalid username supplied"},"404":{"description":"User not found"}}},"put":{"tags":["user"],"summary":"Updated user","description":"This can only be done by the logged in user.","operationId":"updateUser","produces":["application/xml","application/json"],"parameters":[{"name":"username","in":"path","description":"name that need to be updated","required":true,"type":"string"},{"in":"body","name":"body","description":"Updated user object","required":true,"schema":{"$ref":"#/definitions/User"}}],"responses":{"400":{"description":"Invalid user supplied"},"404":{"description":"User not found"}}},"delete":{"tags":["user"],"summary":"Delete user","description":"This can only be done by the logged in user.","operationId":"deleteUser","produces":["application/xml","application/json"],"parameters":[{"name":"username","in":"path","description":"The name that needs to be deleted","required":true,"type":"string"}],"responses":{"400":{"description":"Invalid username supplied"},"404":{"description":"User not found"}}}}},"securityDefinitions":{"petstore_auth":{"type":"oauth2","authorizationUrl":"http://petstore.swagger.io/oauth/dialog","flow":"implicit","scopes":{"write:pets":"modify pets in your account","read:pets":"read your pets"}},"api_key":{"type":"apiKey","name":"api_key","in":"header"}},"definitions":{"Order":{"type":"object","properties":{"id":{"type":"integer","format":"int64"},"petId":{"type":"integer","format":"int64"},"quantity":{"type":"integer","format":"int32"},"shipDate":{"type":"string","format":"date-time"},"status":{"type":"string","description":"Order Status","enum":["placed","approved","delivered"]},"complete":{"type":"boolean","default":false}},"xml":{"name":"Order"}},"Category":{"type":"object","properties":{"id":{"type":"integer","format":"int64"},"name":{"type":"string"}},"xml":{"name":"Category"}},"User":{"type":"object","properties":{"id":{"type":"integer","format":"int64"},"username":{"type":"string"},"firstName":{"type":"string"},"lastName":{"type":"string"},"email":{"type":"string"},"password":{"type":"string"},"phone":{"type":"string"},"userStatus":{"type":"integer","format":"int32","description":"User Status"}},"xml":{"name":"User"}},"Tag":{"type":"object","properties":{"id":{"type":"integer","format":"int64"},"name":{"type":"string"}},"xml":{"name":"Tag"}},"Pet":{"type":"object","required":["name","photoUrls"],"properties":{"id":{"type":"integer","format":"int64"},"category":{"$ref":"#/definitions/Category"},"name":{"type":"string","example":"doggie"},"photoUrls":{"type":"array","xml":{"name":"photoUrl","wrapped":true},"items":{"type":"string"}},"tags":{"type":"array","xml":{"name":"tag","wrapped":true},"items":{"$ref":"#/definitions/Tag"}},"status":{"type":"string","description":"pet status in the store","enum":["available","pending","sold"]}},"xml":{"name":"Pet"}},"ApiResponse":{"type":"object","properties":{"code":{"type":"integer","format":"int32"},"type":{"type":"string"},"message":{"type":"string"}}}},"externalDocs":{"description":"Find out more about Swagger","url":"http://swagger.io"}}
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Flexa Connect - Payment API",
+    "description": "The Payment API is used by merchants, processors, gateways, etc. to create and manage charges.\n\n## gRPC and RESTful JSON (OpenAPI V2) APIs\nThe service supports both gRPC and RESTful JSON APIs.",
+    "version": "v1",
+    "contact": {
+      "name": "Flexa",
+      "url": "https://flexa.network",
+      "email": "connect@flexa.network"
+    }
+  },
+  "host": "api.connect.flexa.network",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/vnd.flexa.connect.v1+json"
+  ],
+  "paths": {
+    "/payment/assets": {
+      "get": {
+        "summary": "Get Asset By Currency: Used to get the internal Asset ID used by Flexa for\na given ISO 4217 currency code.",
+        "description": "Returns status code Not Found for an unknown Currency Code, otherwise it\nreturns status codes listed in the Error Codes section above.",
+        "operationId": "PaymentService_GetAssetByCurrency",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetAssetByCurrencyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "currencyCode",
+            "description": "ISO 4217 currency code. Example: `USD`",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/chargecodes": {
+      "post": {
+        "summary": "Create Charge Code: Creates a Charge (request for payment) and a Charge Code\nfor the POS to display.",
+        "description": "Should be called when the Flexa payment method is selected and the POS is\ncapable of displaying a Charge Code (2d barcode) for the payer's device to\nscan.\nThe POS should display the resulting Charge Code then Watch Charge should be\ncalled to follow and respond to the resulting Charge's status updates.\n\nDuplicated actions must be prevented, see Idempotency section above.\nReturns status code Not Found for an unknown Merchant ID, returns status\ncode Already Exists if the Client Charge ID is provided and has already been\ncharged, otherwise it returns status codes listed in the Error Codes section\nabove.",
+        "operationId": "PaymentService_CreateChargeCode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateChargeCodeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateChargeCodeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges": {
+      "get": {
+        "summary": "Get Charge: Fetches a Charge by the provided unique identifier.",
+        "operationId": "PaymentService_GetCharge2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Charge"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.clientChargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      },
+      "delete": {
+        "summary": "Delete Charge: Deletes (cancels) a non-Completed Charge.",
+        "description": "May be called before the Charge is Completed.\n\nIf this call returns successfully, then the authorized amount will have been\nreleased back to the payer and the Charge may no longer be Completed.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Created,\nAuthorized, or Deleted (eg has already been Completed), otherwise it returns\nstatus codes listed in the Error Codes section above.",
+        "operationId": "PaymentService_DeleteCharge2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteChargeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.clientChargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      },
+      "post": {
+        "summary": "Create Charge: Creates a Charge (request for payment).",
+        "description": "Should be called when the POS scans a Flexcode from the payer's device.\nWatch Charge should be called to follow and respond to the resulting Charge's\nstatus updates.\n\nDuplicated actions must be prevented, see Idempotency section above.\nReturns status code Not Found for an unknown Merchant ID or Flexcode Data,\nreturns status code Already Exists if the Flexcode Data has already been\ncharged or the Client Charge ID is provided and has already been charged,\notherwise it returns status codes listed in the Error Codes section above.",
+        "operationId": "PaymentService_CreateCharge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateChargeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateChargeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges/complete": {
+      "put": {
+        "summary": "Complete Charge: Completes (captures) an authorized Charge.",
+        "description": "Should be called once the Charge is Authorized.\n\nIf this call returns successfully, then the authorized amount will have been\nretrieved from the payer and the Charge may no longer be Deleted.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Authorized or\nCompleted (eg has already been Deleted), otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "operationId": "PaymentService_CompleteCharge2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CompleteChargeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges/watch": {
+      "get": {
+        "summary": "Watch Charge: Initiates streamed updates to a single Charge's status.",
+        "description": "The Charge's current status is streamed immediately and subsequent status\nchanges will be streamed as they occur.\n\nNo states prior to the current one will be streamed/replayed.\n\nComplete Charge should be called once the Charge is Authorized.\nDelete Charge may optionally be called before the Charge is Completed.\nCreate Refund may optionally be called after the Charge is Completed.\n\nNever returns status code OK (see Streams section above), returns status\ncode Not Found for an unknown Charge ID, otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "operationId": "PaymentService_WatchCharge2",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1WatchChargeResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1WatchChargeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.clientChargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges/watchall": {
+      "get": {
+        "summary": "Watch Charges: Initiates streamed updates to multiple Charges' statuses.",
+        "description": "Changes to the Charges' statuses are streamed as they occur.\n\nComplete Charge should be called once a Charge is Authorized.\nDelete Charge may optionally be called before a Charge is Completed.\nCreate Refund may optionally be called after a Charge is Completed.\n\nNever returns status code OK (see Streams section above), returns status\ncode Not Found for an unknown Merchant ID, otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "operationId": "PaymentService_WatchCharges",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1WatchChargesResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1WatchChargesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "eventToken",
+            "description": "Optional value previously returned in an Event's next_event_token field.\nIf omitted, the stream will start from the beginning, returning all events.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "merchantId",
+            "description": "Events for this merchant's Charges will be streamed in the response.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges/{chargeId}": {
+      "get": {
+        "summary": "Get Charge: Fetches a Charge by the provided unique identifier.",
+        "operationId": "PaymentService_GetCharge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Charge"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.clientChargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      },
+      "delete": {
+        "summary": "Delete Charge: Deletes (cancels) a non-Completed Charge.",
+        "description": "May be called before the Charge is Completed.\n\nIf this call returns successfully, then the authorized amount will have been\nreleased back to the payer and the Charge may no longer be Completed.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Created,\nAuthorized, or Deleted (eg has already been Completed), otherwise it returns\nstatus codes listed in the Error Codes section above.",
+        "operationId": "PaymentService_DeleteCharge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteChargeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.clientChargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges/{chargeId}/refunds": {
+      "post": {
+        "summary": "Create Refund: Refunds (at least partially) a Charge.",
+        "description": "May be called after the Charge is Completed.\n\nMay be called multiple times to issue partial refunds that sum up to less\nthan or equal the amount initially paid.\n\nIf this call returns successfully, then the requested amount will have been\nreturned to the payer.\n\nDuplicated actions must be prevented, see Idempotency section above.\nReturns status code Not Found for an unknown Charge ID or Merchant ID,\nreturns status code Failed Precondition if the Charge is not currently\nCompleted or doesn't have enough \"unrefunded\" remaining, returns status code\nAlready Exists if the Client Refund ID is provided and has already been\nrefunded, otherwise it returns status codes listed in the Error Codes\nsection above.",
+        "operationId": "PaymentService_CreateRefund",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateRefundResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "description": "Charge to be (at least partially) refunded",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateRefundRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges/{chargeId}:complete": {
+      "put": {
+        "summary": "Complete Charge: Completes (captures) an authorized Charge.",
+        "description": "Should be called once the Charge is Authorized.\n\nIf this call returns successfully, then the authorized amount will have been\nretrieved from the payer and the Charge may no longer be Deleted.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Authorized or\nCompleted (eg has already been Deleted), otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "operationId": "PaymentService_CompleteCharge",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CompleteChargeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/charges/{chargeId}:watch": {
+      "get": {
+        "summary": "Watch Charge: Initiates streamed updates to a single Charge's status.",
+        "description": "The Charge's current status is streamed immediately and subsequent status\nchanges will be streamed as they occur.\n\nNo states prior to the current one will be streamed/replayed.\n\nComplete Charge should be called once the Charge is Authorized.\nDelete Charge may optionally be called before the Charge is Completed.\nCreate Refund may optionally be called after the Charge is Completed.\n\nNever returns status code OK (see Streams section above), returns status\ncode Not Found for an unknown Charge ID, otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "operationId": "PaymentService_WatchCharge",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1WatchChargeResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1WatchChargeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.clientChargeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "clientChargeIdentifier.merchantId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    },
+    "/payment/quotes": {
+      "get": {
+        "summary": "GetQuoteByAssetPair: Returns a currently valid quote for an asset pair.",
+        "description": "Returns NotFound if attempting to get an unknown asset pair, otherwise it\nreturns status codes listed in the Error Codes section above",
+        "operationId": "PaymentService_GetQuoteByAssetPair",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetQuoteByAssetPairResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "assetPair.baseCryptoCode",
+            "description": "aka CCY1, or the ticker of `BTC` in \"btc_usd\".",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "assetPair.quoteCurrencyCode",
+            "description": "aka CCY2, or the ISO 4217 currency code of `USD` in \"btc_usd\".",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PaymentService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "WatchChargesResponseEvent": {
+      "type": "object",
+      "properties": {
+        "nextEventToken": {
+          "type": "string",
+          "description": "May be provided to subsequent WatchCharges requests to (re)start the\nstream at the next event (eg in the case of disconnection).\nIt is an opaque value and must not be interpreted or modified."
+        },
+        "status": {
+          "$ref": "#/definitions/v1ChargeStatus",
+          "title": "Charge's current status"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "typeAssetAmount": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "type": "string",
+          "title": "Opaque, Flexa-specific identifier"
+        },
+        "currencyCode": {
+          "type": "string",
+          "title": "ISO 4217 currency code, eg: `USD`"
+        },
+        "amount": {
+          "$ref": "#/definitions/typeDecimal",
+          "title": "Amount is the value represented in the currency's standard precision"
+        }
+      },
+      "description": "A tuple of a Flexa specific asset identifier and an amount (in decimal format)",
+      "title": "AssetAmount"
+    },
+    "typeAssetPair": {
+      "type": "object",
+      "properties": {
+        "baseCryptoCode": {
+          "type": "string",
+          "title": "aka CCY1, or the ticker of `BTC` in \"btc_usd\""
+        },
+        "quoteCurrencyCode": {
+          "type": "string",
+          "title": "aka CCY2, or the ISO 4217 currency code of `USD` in \"btc_usd\""
+        }
+      },
+      "description": "A tuple of asset identifiers",
+      "title": "AssetPair"
+    },
+    "typeDecimal": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "Decimal represents a decimal value, and is typically used as part of a\nmonetary representation where precision is required.",
+      "title": "Decimal"
+    },
+    "typeImageData": {
+      "type": "object",
+      "properties": {
+        "mimeType": {
+          "type": "string",
+          "title": "IANA media type of the included data"
+        },
+        "data": {
+          "type": "string",
+          "format": "byte",
+          "title": "Formatted according to the MIME type"
+        }
+      },
+      "description": "Image data contains the mime type and bytes of an image",
+      "title": "ImageData"
+    },
+    "v1Charge": {
+      "type": "object",
+      "properties": {
+        "chargeId": {
+          "type": "string",
+          "title": "The unique identifier for this charge"
+        },
+        "requestedAmount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "The amount initially requested for the charge"
+        },
+        "authorizedAmount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "description": "The amount, if any, that has been authorized and can be charged.\nIf complete_time is not null, this is the amount of the completed charge."
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "The time the charge was created"
+        },
+        "authorizeTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "The time the charge was authorized, if authorized"
+        },
+        "deleteTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "The time the charge was deleted, if deleted"
+        },
+        "completeTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "The time the charge was completed, if completed"
+        }
+      }
+    },
+    "v1ChargeCode": {
+      "type": "object",
+      "properties": {
+        "imageData": {
+          "$ref": "#/definitions/typeImageData",
+          "title": "Image do be displayed by POS"
+        },
+        "data": {
+          "type": "string",
+          "title": "Raw data string used to generate Image (2d barcode)"
+        }
+      },
+      "description": "A Charge Code contains metadata that can be used by a point of sale to display information that a customer can use to complete a payment.",
+      "title": "Charge Code"
+    },
+    "v1ChargeStatus": {
+      "type": "object",
+      "properties": {
+        "chargeId": {
+          "type": "string"
+        },
+        "clientChargeId": {
+          "type": "string",
+          "title": "Client-generated ID if provided when creating Charge\nSee Client IDs section above"
+        },
+        "created": {
+          "$ref": "#/definitions/v1ChargeStatusCreated"
+        },
+        "deleted": {
+          "$ref": "#/definitions/v1ChargeStatusDeleted"
+        },
+        "authorized": {
+          "$ref": "#/definitions/v1ChargeStatusAuthorized"
+        },
+        "completed": {
+          "$ref": "#/definitions/v1ChargeStatusCompleted"
+        }
+      }
+    },
+    "v1ChargeStatusAuthorized": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "Amount actually authorized (may be less than amount requested)"
+        }
+      },
+      "description": "Authorized by payer (may still be deleted by either party)",
+      "title": "Authorized"
+    },
+    "v1ChargeStatusCompleted": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "Amount actually paid (equal to amount authorized)"
+        }
+      },
+      "description": "Paid/Completed",
+      "title": "Completed"
+    },
+    "v1ChargeStatusCreated": {
+      "type": "object",
+      "description": "Newly created (pending)",
+      "title": "Created"
+    },
+    "v1ChargeStatusDeleted": {
+      "type": "object",
+      "description": "Canceled by either party",
+      "title": "Deleted"
+    },
+    "v1ClientChargeIdentifier": {
+      "type": "object",
+      "properties": {
+        "clientChargeId": {
+          "type": "string"
+        },
+        "merchantId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CompleteChargeResponse": {
+      "type": "object",
+      "title": "Complete Charge Response"
+    },
+    "v1CreateChargeCodeRequest": {
+      "type": "object",
+      "properties": {
+        "merchantId": {
+          "type": "string",
+          "title": "The identifier for the Merchant creating the Charge Code"
+        },
+        "amount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "Asset (currency) and amount of charge"
+        },
+        "clientChargeId": {
+          "type": "string",
+          "title": "Optional client-generated, unique ID\nSee Client IDs section above"
+        },
+        "clientAccountId": {
+          "type": "string",
+          "description": "The identifier for the Account benefitting from the Charge Code.\n\nUnless explicitly instructed by the Flexa team, this field should be omitted."
+        },
+        "quoteId": {
+          "type": "string",
+          "description": "Quote ID that will be used when exchanging assets.\n\nUnless explicitly instructed by the Flexa team, this field should be omitted.\n\nWhen present:\nThe Quote Asset must match the Amount's Asset\nThe customer will be required to pay in the specified Base Asset\nThe Charge's Expire Time will be no later than the Quote's Expire Time,\nafter which the Charge will be Deleted (no longer payable)."
+        }
+      },
+      "title": "Create Charge Code Request"
+    },
+    "v1CreateChargeCodeResponse": {
+      "type": "object",
+      "properties": {
+        "chargeId": {
+          "type": "string"
+        },
+        "chargeCode": {
+          "$ref": "#/definitions/v1ChargeCode",
+          "title": "Code to display on POS"
+        },
+        "payCode": {
+          "type": "string",
+          "title": "Alternate identifier that can be used in absence of camera"
+        },
+        "destinationString": {
+          "type": "string",
+          "title": "Optional, alternate destination that can be copied and pasted in absence of camera"
+        },
+        "expireTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Time after which the Charge will be Deleted and no longer payable"
+        }
+      },
+      "title": "Create Charge Code Response"
+    },
+    "v1CreateChargeRequest": {
+      "type": "object",
+      "properties": {
+        "merchantId": {
+          "type": "string",
+          "title": "The identifier for the Merchant creating the charge"
+        },
+        "amount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "Asset (currency) and amount of charge"
+        },
+        "flexcodeData": {
+          "type": "string",
+          "title": "Data from scanned flexcode"
+        },
+        "clientChargeId": {
+          "type": "string",
+          "title": "Optional client-generated, unique ID\nSee Client IDs section above"
+        }
+      },
+      "title": "Create Charge Request"
+    },
+    "v1CreateChargeResponse": {
+      "type": "object",
+      "properties": {
+        "chargeId": {
+          "type": "string"
+        }
+      },
+      "title": "Create Charge Response"
+    },
+    "v1CreateRefundRequest": {
+      "type": "object",
+      "properties": {
+        "chargeId": {
+          "type": "string",
+          "title": "Charge to be (at least partially) refunded"
+        },
+        "merchantId": {
+          "type": "string",
+          "title": "The identifier for the Merchant to issue the refund"
+        },
+        "amount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "Amount to refund, must be less than or equal to this Charge's remaining,\nnon-refunded amount"
+        },
+        "reason": {
+          "$ref": "#/definitions/v1RefundReason"
+        },
+        "clientRefundId": {
+          "type": "string",
+          "title": "Optional client-generated, unique ID\nSee Client IDs section above"
+        }
+      },
+      "title": "Create Refund Request"
+    },
+    "v1CreateRefundResponse": {
+      "type": "object",
+      "title": "Create Refund Response"
+    },
+    "v1DeleteChargeResponse": {
+      "type": "object",
+      "title": "Delete Charge Response"
+    },
+    "v1GetAssetByCurrencyResponse": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "type": "string"
+        }
+      },
+      "title": "Get Asset By Currency Response"
+    },
+    "v1GetQuoteByAssetPairResponse": {
+      "type": "object",
+      "properties": {
+        "quote": {
+          "$ref": "#/definitions/v1Quote"
+        }
+      },
+      "title": "Get Quote By Asset Pair Response"
+    },
+    "v1Quote": {
+      "type": "object",
+      "properties": {
+        "quoteId": {
+          "type": "string"
+        },
+        "assetPair": {
+          "$ref": "#/definitions/typeAssetPair",
+          "title": "Tuple of the base and quote assets"
+        },
+        "bidPrice": {
+          "$ref": "#/definitions/typeDecimal",
+          "title": "How many units of the quote asset would be paid to buy 1 unit of base asset"
+        },
+        "expireTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Time after which the quote is no longer valid"
+        }
+      }
+    },
+    "v1RefundReason": {
+      "type": "string",
+      "enum": [
+        "REFUND_REASON_UNSPECIFIED",
+        "REFUND_REASON_CUSTOMER_REQUESTED",
+        "REFUND_REASON_MERCHANT_CANCELED"
+      ],
+      "default": "REFUND_REASON_UNSPECIFIED",
+      "description": "- REFUND_REASON_UNSPECIFIED: Reserved as a default selection. Using this value not valid.",
+      "title": "The cause of the refund request"
+    },
+    "v1WatchChargeResponse": {
+      "type": "object",
+      "properties": {
+        "heartbeat": {
+          "$ref": "#/definitions/v1WatchChargeResponseHeartbeat"
+        },
+        "created": {
+          "$ref": "#/definitions/v1WatchChargeResponseCreated"
+        },
+        "deleted": {
+          "$ref": "#/definitions/v1WatchChargeResponseDeleted"
+        },
+        "authorized": {
+          "$ref": "#/definitions/v1WatchChargeResponseAuthorized"
+        },
+        "completed": {
+          "$ref": "#/definitions/v1WatchChargeResponseCompleted"
+        }
+      },
+      "title": "Watch Charge Response"
+    },
+    "v1WatchChargeResponseAuthorized": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "Amount actually authorized (may be less than amount requested)"
+        }
+      },
+      "description": "Authorized by payer (may still be deleted by either party)",
+      "title": "Authorized"
+    },
+    "v1WatchChargeResponseCompleted": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/typeAssetAmount",
+          "title": "Amount actually paid (equal to amount authorized)"
+        }
+      },
+      "description": "Paid/Completed",
+      "title": "Completed"
+    },
+    "v1WatchChargeResponseCreated": {
+      "type": "object",
+      "description": "Newly created (pending)",
+      "title": "Created"
+    },
+    "v1WatchChargeResponseDeleted": {
+      "type": "object",
+      "description": "Canceled by either party",
+      "title": "Deleted"
+    },
+    "v1WatchChargeResponseHeartbeat": {
+      "type": "object",
+      "description": "See Streams section above",
+      "title": "Heartbeat"
+    },
+    "v1WatchChargesResponse": {
+      "type": "object",
+      "properties": {
+        "heartbeat": {
+          "$ref": "#/definitions/v1WatchChargesResponseHeartbeat"
+        },
+        "event": {
+          "$ref": "#/definitions/WatchChargesResponseEvent"
+        }
+      },
+      "title": "Watch Charges Response"
+    },
+    "v1WatchChargesResponseHeartbeat": {
+      "type": "object",
+      "description": "See Streams section above",
+      "title": "Heartbeat"
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}
