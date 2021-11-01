@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Flexa Connect - Payment API",
-    "description": "The Payment API is used by merchants, processors, gateways, etc. to create and manage charges.\n\n## gRPC and RESTful JSON (OpenAPI V2) APIs\nThe service supports both gRPC and RESTful JSON APIs.",
+    "description": "The Payment API is used by merchants, processors, gateways, etc. to create and manage charges.\n\n## gRPC and RESTful JSON (OpenAPI V2) APIs\nThe service supports both gRPC and RESTful JSON APIs. The gRPC API is strongly preferred.\n\nInternally, the RESTful JSON API is implemented as a wrapper around the gRPC API. As a result, the latter is the \"native\" API that has fewer moving pieces, lower latency, and may expose more functionality. The former is provided only for compatibility in cases where gRPC cannot be used due to technical limitations.\n\nBoth APIs listen on port 443 on the same domain (host). Clients wishing to access the RESTful JSON API must set the \"accept\" header to have the value \"application/vnd.flexa.connect.v1+json\", otherwise the request will be interpreted as gRPC.\n\n## Backwards Compatibility\nThe service abides by Semantic Versioning 2.0.0. Non-breaking, backwards-compatibility will be maintained for the life of the major version.\n\nWithin a major version, any kind of backwards-compatible, non-breaking changes can be made, including:\n  * New fields may be added to types within responses (including new\n    kinds of events within streams)\n  * New, optional fields may be added to types within requests\n  * New methods/endpoints may be added\n  * New error codes may be returned\n\n\nThis implies that clients must ignore unknown fields within responses (including whole new event types in streams) and may not rely on knowing an exhaustive list of status codes.\n\nSee: https://semver.org/\n\n## Encryption (TLS/SSL)\nAll connections to the service must be encrypted using TLS (SSL). The server will use a certificate signed by a certificate authority that is trusted by most system certificate pools (eg the ones included in the \"ca-certificates\" package on Debian/Ubuntu/Alpine Linux). Some gRPC clients (eg grpc-go) may require explicitly trusting the system cert pool on initialization.\n\nClients must not provide their own client TLS key or certificate (ie mTLS must not be used). Clients use tokens to authenticate, see Authentication section below.\n\ngRPC uses HTTP/2. TLS connections use Application-Layer Protocol Negotiation (APLN) to upgrade a connection to HTTP/2. Some client libraries (eg Java before version 9) require a library/setting to support/enable APLN.\n\n## Authentication\nAuthentication tokens are provided out of band. The token is used to identify the client application and must be included verbatim in all requests. It must not be interpreted in any way and should be treated as an opaque string.\n\nAll requests must set the \"authorization\" metadata key (gRPC) or header (RESTful JSON) to have the value \"Bearer opaqueTokenString\". Where \"opaqueTokenString\" is the previously-provided token.\n\n## Parallelism (multiple clients)\nEach of this service's methods act either atomically or idempotently. Multiple connections (from one or more clients) can safely be used to make simultaneous requests.\n\nSee Idempotency section below.\n\n## Pagination\nAll methods that return lists support pagination. Their requests contain Page Token and Page Size fields and their responses contain a Next Page Token field.\nSee: https://cloud.google.com/apis/design/design_patterns#list_pagination\n\n## Idempotency\nSometimes requests fail due to network connectivity issues. If the request was changing state (eg creating a new object), the client won't know whether the request succeeded. If it had, then sending another request could result in duplicated effects. If it hadn't, then not sending another request would result in missing effects.\n\nTo prevent this, requests that change state in a way that's not inherently idempotent (eg ones that create new objects) must set the \"idempotency-key\" metadata key (gRPC) or header (RESTful JSON) to a new, unique nonce.\n\nIf there is a possible connection error, then the request should be retried again with the same parameters and Idempotency Key. This will ensure that the result (success or failure) of the original attempt is returned and prevents erroneous duplication if the request was successfully processed but that result couldn't be returned.\n\nThe results associated with a particular Idempotency Key are retained for at least 24 hours. If an Idempotency Key is reused after that time it may result in a new request being processed.\n\nIdempotency Keys must be strings containing at most 1024 bytes. Usually it's best to generate a new V4 UUID.\n\nRequests will return status code Invalid Argument if an Idempotency Key is either omitted from a not-inherently-idempotent request or reused with different parameters.\n\nRetries should use an exponential-backoff algorithm and incorporate some jitter to avoid overwhelming the server with a flood of synchronized retries.\n\nIn addition to TCP disconnections, the following status codes should generally be retried:\n  * Unavailable\n  * Canceled\n  * Deadline Exceeded\n  * Unknown\n\n\n## Keepalive\nLong-running, idle TCP connections can silently fail for various reasons (eg a L4 proxy may silently drop state for \"idle\" connections). Requests that block for arbitrary amounts of time waiting for updates (like streams) should enable gRPC's Keepalive functionality (eg grpc-go clients should set `keepalive.ClientParameters.Time = 1 * time.Minute`).\n\nSee: https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md\nSee: https://github.com/grpc/grpc/blob/master/doc/keepalive.md\n\n## Streams\nStreams continually and indefinitely return instances of the same response type. Unless there is an error, the server never closes stream/connection, therefore the status code OK is never returned.\n\nLong-running, idle TCP connections can silently fail for various reasons (eg a L4 proxy may silently drop state for \"idle\" connections). The server will attempt to prevent this by periodically sending Heartbeats on streams that haven't sent a response instance in a while. The client should cancel/close the stream (and re-call the method if needed) if it's been \"too long\" without a response instance of any kind (Heartbeat or otherwise). Currently the server sends a Heartbeat on a stream once it's been idle for 1 minute so a client should cancel/close a stream that's gone 90-120 seconds without any response instance. **Clients that don't implement a timeout may end up listening forever to a silently-broken connection.**  See Keepalive section above.\n\nNew event types may be added to the response at any time, see Backwards Compatibility section above.\n\nThe RESTful JSON API uses HTTP's Chunked Transfer-Encoding, returning one response instance per Chunk. Clients must ensure that they can stream individual Chunks, otherwise they will block, waiting forever for the HTTP response to be \"complete\" (which will never happen).\n\nSee: https://en.wikipedia.org/wiki/Chunked_transfer_encoding\n\n## Client IDs\nClient IDs are usually optional and may be omitted from most requests without any change in functionality.\n\nSome clients have their own audit IDs, transaction IDs, or other kind of identifiers/state that they'd like to associate with various requests. If so, they can be supplied in the Client ID field within the appropriate requests.\n\nThe service does not assign any semantic meaning to the contents of the Client ID. When present, the server just validates that it's a string containing no more than 1024 bytes and ensures that it's unique.\n\nIf it would be useful to have any any other functionality based off of the Client ID, please let us know.\n\n## Debugging\nAll requests may set the \"x-client-trace-id\" metadata key (gRPC) or header (RESTful JSON) to a unique string containing at most 1024 bytes. Usually it's best to generate a new V4 UUID.\n\nThese Client Trace IDs will be logged in server-side messages and trace and are immensely helpful when trying to debug issues. Clients should also log the Client Trace ID of any abnormal/delayed/failing request so they can be correlated as needed.\n\n## Error Codes\nThis service returns the appropriate, standardized gRPC status codes for all error conditions.\n\nAll methods can return at least the following errors (and will individually document any other codes they may return):\n  * OK: success\n  * Unauthenticated: see Authentication section above\n  * Permission Denied: provided token not authorized to perform\n    requested action\n  * Invalid Argument: see returned error message for details\n  * Unavailable: transient error, please retry with a backoff and\n    report if it persists (include any returned error message)\n  * Unimplemented: functionality is not yet available, please let us\n    know if a particular feature would be useful so we prioritize its\n    implementation\n  * Internal: server-side issue, an automatic alert will have been\n    raised, but please report if it persists (include any returned\n    error message)\n\n\nClient implementations may also generate their own status codes including:\n  * Canceled\n  * Deadline Exceeded: timeouts can occur due to network conditions\n    (see Keepalive section above) or server issues, please report\n    suspicions of the latter\n  * Unknown: should not ever be returned from ther server; if it\n    is, an automatic alert will have been raised, but please report\n    if it persists (include any returned error message)\n\n\nSee: https://github.com/grpc/grpc/blob/master/doc/statuscodes.md\n",
     "version": "v1",
     "contact": {
       "name": "Flexa",
@@ -23,8 +23,8 @@
   "paths": {
     "/payment/assets": {
       "get": {
-        "summary": "Get Asset By Currency: Used to get the internal Asset ID used by Flexa for\na given ISO 4217 currency code.",
-        "description": "Returns status code Not Found for an unknown Currency Code, otherwise it\nreturns status codes listed in the Error Codes section above.",
+        "summary": "Get Asset By Currency: Returns the assetID associated with an ISO 4217 currency code.",
+        "description": "The assetId is an internal Asset ID used by Flexa for a given ISO 4217 currency code.\n\nReturns status code \"Not Found\" for an unknown Currency Code, otherwise this API returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_GetAssetByCurrency",
         "responses": {
           "200": {
@@ -43,7 +43,7 @@
         "parameters": [
           {
             "name": "currencyCode",
-            "description": "ISO 4217 currency code. Example: `USD`",
+            "description": "[ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency code. Example: `USD`",
             "in": "query",
             "required": false,
             "type": "string"
@@ -56,8 +56,8 @@
     },
     "/payment/chargecodes": {
       "post": {
-        "summary": "Create Charge Code: Creates a Charge (request for payment) and a Charge Code\nfor the POS to display.",
-        "description": "Should be called when the Flexa payment method is selected and the POS is\ncapable of displaying a Charge Code (2d barcode) for the payer's device to\nscan.\nThe POS should display the resulting Charge Code then Watch Charge should be\ncalled to follow and respond to the resulting Charge's status updates.\n\nDuplicated actions must be prevented, see Idempotency section above.\nReturns status code Not Found for an unknown Merchant ID, returns status\ncode Already Exists if the Client Charge ID is provided and has already been\ncharged, otherwise it returns status codes listed in the Error Codes section\nabove.",
+        "summary": "Create Charge Code: creates a Charge (request for payment) and a Charge Code to display.",
+        "description": "Should be called when the Flexa payment method is selected and the point-of-sale is capable of displaying a Charge Code (2d barcode) for the payer's device to scan.\n\nThe point-of-sale should display the resulting Charge Code then Watch Charge should be called to follow and respond to the resulting Charge's status updates.\n\nDuplicated actions must be prevented, see Idempotency section above.\n\nReturns status code \"Not Found\" for an unknown Merchant ID, returns status code \"Already Exists\" if the Client Charge ID is provided and has already been charged, otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_CreateChargeCode",
         "responses": {
           "200": {
@@ -90,7 +90,8 @@
     },
     "/payment/charges": {
       "get": {
-        "summary": "Get Charge: Fetches a Charge by the provided unique identifier.",
+        "summary": "Get Charge: fetches Charge status.",
+        "description": "This API can be used as a polling alternative to the stream-based watch/watchall APIs.\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.",
         "operationId": "PaymentService_GetCharge2",
         "responses": {
           "200": {
@@ -127,12 +128,12 @@
           }
         ],
         "tags": [
-          "PaymentService"
+          "updates"
         ]
       },
       "delete": {
-        "summary": "Delete Charge: Deletes (cancels) a non-Completed Charge.",
-        "description": "May be called before the Charge is Completed.\n\nIf this call returns successfully, then the authorized amount will have been\nreleased back to the payer and the Charge may no longer be Completed.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Created,\nAuthorized, or Deleted (eg has already been Completed), otherwise it returns\nstatus codes listed in the Error Codes section above.",
+        "summary": "Delete Charge: deletes (cancels) a non-Completed Charge.",
+        "description": "May be called before the Charge is Completed.\n\nIf this call returns successfully, then the authorized amount will have been released back to the payer and the Charge may no longer be Completed.\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.\n\nMay be retried idempotently.\n\nReturns status code \"Not Found\" for an unknown Charge ID, returns status code \"Failed Precondition\" if the Charge is not currently either Created, Authorized, or Deleted (e.g. has already been Completed), otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_DeleteCharge2",
         "responses": {
           "200": {
@@ -173,8 +174,8 @@
         ]
       },
       "post": {
-        "summary": "Create Charge: Creates a Charge (request for payment).",
-        "description": "Should be called when the POS scans a Flexcode from the payer's device.\nWatch Charge should be called to follow and respond to the resulting Charge's\nstatus updates.\n\nDuplicated actions must be prevented, see Idempotency section above.\nReturns status code Not Found for an unknown Merchant ID or Flexcode Data,\nreturns status code Already Exists if the Flexcode Data has already been\ncharged or the Client Charge ID is provided and has already been charged,\notherwise it returns status codes listed in the Error Codes section above.",
+        "summary": "Create Charge: creates a Charge (request for payment).",
+        "description": "Create charge should be called when the point-of-sale scans a Flexcode from the payer's device. Watch Charge or Get Charge should be called to follow and respond to the resulting Charge's status updates.\n\nDuplicated actions must be prevented, see the Idempotency section above.\n\nReturns status code \"Not Found\" for an unknown Merchant ID or Flexcode Data, returns status code \"Already Exists\" if the Flexcode Data has already been charged or the Client Charge ID is provided and has already been charged, otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_CreateCharge",
         "responses": {
           "200": {
@@ -207,8 +208,8 @@
     },
     "/payment/charges/complete": {
       "put": {
-        "summary": "Complete Charge: Completes (captures) an authorized Charge.",
-        "description": "Should be called once the Charge is Authorized.\n\nIf this call returns successfully, then the authorized amount will have been\nretrieved from the payer and the Charge may no longer be Deleted.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Authorized or\nCompleted (eg has already been Deleted), otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "summary": "Complete Charge: completes (captures) an authorized Charge.",
+        "description": "Should be called once the Charge is Authorized.\n\nIf this call returns successfully, then the authorized amount will have been retrieved from the payer and the Charge may no longer be Deleted (though may be refunded).\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.\n\nMay be retried idempotently.\n\nReturns status code \"Not Found\" for an unknown Charge ID, returns status code \"Failed Precondition\" if the Charge is not currently either Authorized or Completed (e.g. has already been Deleted), otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_CompleteCharge2",
         "responses": {
           "200": {
@@ -231,8 +232,8 @@
     },
     "/payment/charges/watch": {
       "get": {
-        "summary": "Watch Charge: Initiates streamed updates to a single Charge's status.",
-        "description": "The Charge's current status is streamed immediately and subsequent status\nchanges will be streamed as they occur.\n\nNo states prior to the current one will be streamed/replayed.\n\nComplete Charge should be called once the Charge is Authorized.\nDelete Charge may optionally be called before the Charge is Completed.\nCreate Refund may optionally be called after the Charge is Completed.\n\nNever returns status code OK (see Streams section above), returns status\ncode Not Found for an unknown Charge ID, otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "summary": "Watch Charge: streams updates to a single Charge's status.",
+        "description": "The Charge's current status is streamed immediately and subsequent status changes will be streamed as they occur.\n\nNo states prior to the current one will be streamed/replayed.\n\nComplete Charge should be called once the Charge is Authorized.\nDelete Charge may optionally be called before the Charge is Completed.\nCreate Refund may optionally be called after the Charge is Completed.\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.\n\nNever returns status code \"OK\" (see Streams section above), returns status code \"Not Found\" for an unknown Charge ID, otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_WatchCharge2",
         "responses": {
           "200": {
@@ -278,14 +279,14 @@
           }
         ],
         "tags": [
-          "PaymentService"
+          "updates"
         ]
       }
     },
     "/payment/charges/watchall": {
       "get": {
-        "summary": "Watch Charges: Initiates streamed updates to multiple Charges' statuses.",
-        "description": "Changes to the Charges' statuses are streamed as they occur.\n\nComplete Charge should be called once a Charge is Authorized.\nDelete Charge may optionally be called before a Charge is Completed.\nCreate Refund may optionally be called after a Charge is Completed.\n\nNever returns status code OK (see Streams section above), returns status\ncode Not Found for an unknown Merchant ID, otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "summary": "Watch All Charges: streams updates to multiple Charges' statuses.",
+        "description": "Changes to the Charges' statuses are streamed as they occur.\n\nComplete Charge should be called once a Charge is Authorized.\nDelete Charge may optionally be called before a Charge is Completed.\nCreate Refund may optionally be called after a Charge is Completed.\n\nNever returns status code \"OK\" (see Streams section above), returns status code \"Not Found\" for an unknown Merchant ID, otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_WatchCharges",
         "responses": {
           "200": {
@@ -333,7 +334,8 @@
     },
     "/payment/charges/{chargeId}": {
       "get": {
-        "summary": "Get Charge: Fetches a Charge by the provided unique identifier.",
+        "summary": "Get Charge: fetches Charge status.",
+        "description": "This API can be used as a polling alternative to the stream-based watch/watchall APIs.\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.",
         "operationId": "PaymentService_GetCharge",
         "responses": {
           "200": {
@@ -370,12 +372,12 @@
           }
         ],
         "tags": [
-          "PaymentService"
+          "updates"
         ]
       },
       "delete": {
-        "summary": "Delete Charge: Deletes (cancels) a non-Completed Charge.",
-        "description": "May be called before the Charge is Completed.\n\nIf this call returns successfully, then the authorized amount will have been\nreleased back to the payer and the Charge may no longer be Completed.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Created,\nAuthorized, or Deleted (eg has already been Completed), otherwise it returns\nstatus codes listed in the Error Codes section above.",
+        "summary": "Delete Charge: deletes (cancels) a non-Completed Charge.",
+        "description": "May be called before the Charge is Completed.\n\nIf this call returns successfully, then the authorized amount will have been released back to the payer and the Charge may no longer be Completed.\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.\n\nMay be retried idempotently.\n\nReturns status code \"Not Found\" for an unknown Charge ID, returns status code \"Failed Precondition\" if the Charge is not currently either Created, Authorized, or Deleted (e.g. has already been Completed), otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_DeleteCharge",
         "responses": {
           "200": {
@@ -418,8 +420,8 @@
     },
     "/payment/charges/{chargeId}/refunds": {
       "post": {
-        "summary": "Create Refund: Refunds (at least partially) a Charge.",
-        "description": "May be called after the Charge is Completed.\n\nMay be called multiple times to issue partial refunds that sum up to less\nthan or equal the amount initially paid.\n\nIf this call returns successfully, then the requested amount will have been\nreturned to the payer.\n\nDuplicated actions must be prevented, see Idempotency section above.\nReturns status code Not Found for an unknown Charge ID or Merchant ID,\nreturns status code Failed Precondition if the Charge is not currently\nCompleted or doesn't have enough \"unrefunded\" remaining, returns status code\nAlready Exists if the Client Refund ID is provided and has already been\nrefunded, otherwise it returns status codes listed in the Error Codes\nsection above.",
+        "summary": "Create Refund: refunds a Charge.",
+        "description": "May be called after the Charge is Completed.\n\nMay be called multiple times to issue partial refunds that sum up to less than or equal the amount initially paid.\n\nIf this call returns successfully, then the requested amount will have been returned to the payer.\n\nDuplicated actions must be prevented, see Idempotency section above.\n\nReturns status code \"Not Found\" for an unknown Charge ID or Merchant ID, returns status code \"Failed Precondition\" if the Charge is not currently Completed or doesn't have enough \"unrefunded\" remaining, returns status code \"Already Exists\" if the Client Refund ID is provided and has already been refunded, otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_CreateRefund",
         "responses": {
           "200": {
@@ -459,8 +461,8 @@
     },
     "/payment/charges/{chargeId}:complete": {
       "put": {
-        "summary": "Complete Charge: Completes (captures) an authorized Charge.",
-        "description": "Should be called once the Charge is Authorized.\n\nIf this call returns successfully, then the authorized amount will have been\nretrieved from the payer and the Charge may no longer be Deleted.\n\nMay be retried idempotently.\nReturns status code Not Found for an unknown Charge ID, returns status code\nFailed Precondition if the Charge is not currently either Authorized or\nCompleted (eg has already been Deleted), otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "summary": "Complete Charge: completes (captures) an authorized Charge.",
+        "description": "Should be called once the Charge is Authorized.\n\nIf this call returns successfully, then the authorized amount will have been retrieved from the payer and the Charge may no longer be Deleted (though may be refunded).\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.\n\nMay be retried idempotently.\n\nReturns status code \"Not Found\" for an unknown Charge ID, returns status code \"Failed Precondition\" if the Charge is not currently either Authorized or Completed (e.g. has already been Deleted), otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_CompleteCharge",
         "responses": {
           "200": {
@@ -491,8 +493,8 @@
     },
     "/payment/charges/{chargeId}:watch": {
       "get": {
-        "summary": "Watch Charge: Initiates streamed updates to a single Charge's status.",
-        "description": "The Charge's current status is streamed immediately and subsequent status\nchanges will be streamed as they occur.\n\nNo states prior to the current one will be streamed/replayed.\n\nComplete Charge should be called once the Charge is Authorized.\nDelete Charge may optionally be called before the Charge is Completed.\nCreate Refund may optionally be called after the Charge is Completed.\n\nNever returns status code OK (see Streams section above), returns status\ncode Not Found for an unknown Charge ID, otherwise it returns status codes\nlisted in the Error Codes section above.",
+        "summary": "Watch Charge: streams updates to a single Charge's status.",
+        "description": "The Charge's current status is streamed immediately and subsequent status changes will be streamed as they occur.\n\nNo states prior to the current one will be streamed/replayed.\n\nComplete Charge should be called once the Charge is Authorized.\nDelete Charge may optionally be called before the Charge is Completed.\nCreate Refund may optionally be called after the Charge is Completed.\n\nIf not using the flexa provided chargeId within the url path, clientChargeIdentifier.clientChargeId and clientChargeIdentifier.merchantId are required as a query parameters.\n\nNever returns status code \"OK\" (see Streams section above), returns status code \"Not Found\" for an unknown Charge ID, otherwise it returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_WatchCharge",
         "responses": {
           "200": {
@@ -538,14 +540,14 @@
           }
         ],
         "tags": [
-          "PaymentService"
+          "updates"
         ]
       }
     },
     "/payment/quotes": {
       "get": {
-        "summary": "GetQuoteByAssetPair: Returns a currently valid quote for an asset pair.",
-        "description": "Returns NotFound if attempting to get an unknown asset pair, otherwise it\nreturns status codes listed in the Error Codes section above",
+        "summary": "GetQuoteByAssetPair: Returns the current quote for an asset pair.",
+        "description": "Returns status code \"Not Found\" if attempting to get an unknown asset pair, otherwise this API returns status codes listed in the Error Codes section above.",
         "operationId": "PaymentService_GetQuoteByAssetPair",
         "responses": {
           "200": {
@@ -589,7 +591,7 @@
       "properties": {
         "nextEventToken": {
           "type": "string",
-          "description": "May be provided to subsequent WatchCharges requests to (re)start the\nstream at the next event (eg in the case of disconnection).\nIt is an opaque value and must not be interpreted or modified."
+          "description": "May be provided to subsequent WatchCharges requests to (re)start the\nstream at the next event (e.g. in the case of disconnection).\nIt is an opaque value and must not be interpreted or modified."
         },
         "status": {
           "$ref": "#/definitions/v1ChargeStatus",
@@ -729,7 +731,7 @@
       "properties": {
         "imageData": {
           "$ref": "#/definitions/typeImageData",
-          "title": "Image do be displayed by POS"
+          "title": "Image to be displayed by point-of-sale"
         },
         "data": {
           "type": "string",
@@ -827,7 +829,7 @@
         },
         "clientAccountId": {
           "type": "string",
-          "description": "The identifier for the Account benefitting from the Charge Code.\n\nUnless explicitly instructed by the Flexa team, this field should be omitted."
+          "description": "The identifier for the Account benefiting from the Charge Code.\n\nUnless explicitly instructed by the Flexa team, this field should be omitted."
         },
         "quoteId": {
           "type": "string",
@@ -844,7 +846,7 @@
         },
         "chargeCode": {
           "$ref": "#/definitions/v1ChargeCode",
-          "title": "Code to display on POS"
+          "title": "Code to display on point-of-sale"
         },
         "payCode": {
           "type": "string",
@@ -899,10 +901,6 @@
         "chargeId": {
           "type": "string",
           "title": "Charge to be (at least partially) refunded"
-        },
-        "merchantId": {
-          "type": "string",
-          "title": "The identifier for the Merchant to issue the refund"
         },
         "amount": {
           "$ref": "#/definitions/typeAssetAmount",
